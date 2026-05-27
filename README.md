@@ -1,4 +1,4 @@
-# process-control-spc
+# Process Control & SPC Toolkit
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![Tests](https://img.shields.io/badge/Tests-50%20passed-437A22?style=flat-square&logo=pytest&logoColor=white)](tests/)
