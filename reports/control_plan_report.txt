@@ -1,0 +1,85 @@
+
+  ╔══════════════════════════════════════════════════════════════════════════════╗
+  ║           CONTROL PLAN REPORT — TOBACCO ROD WEIGHT (Statistical SPC)        ║
+  ╚══════════════════════════════════════════════════════════════════════════════╝
+
+  Generated : 2026-05-27 20:25
+  Author    : Gavin Anderson (M.S. Data Science)
+  Reference : AIAG SPC Manual, 2nd Ed. | Montgomery SQC, 8th Ed.
+
+  ─────────────────────────── PART INFORMATION ────────────────────────────────
+  Part           : Tobacco Rod
+  Characteristic : Fill Weight (mg)
+  Target         : 1000 mg
+  USL            : 1015 mg
+  LSL            : 985 mg
+  Tolerance      : 30 mg
+  Subgroup size  : n = 5
+  SPC Constants  : A2=0.577, D3=0, D4=2.114, d2=2.326  (Montgomery Table VI)
+
+  ─────────────────────────── DATA SUMMARY ────────────────────────────────────
+  Total observations : 1800
+  Days               : 30  (4 shifts/day × 3 lines × 5 samples)
+  Machine lines      : Line A, Line B, Line C
+  Overall mean       : 1000.109 mg
+  Overall std dev    : 3.749 mg
+  Out-of-spec count  : 2  (0.11% of observations)
+
+  ─────────────────────────── CAPABILITY INDICES (ALL LINES) ──────────────────
+  Short-term σ (Rbar/d2) : 3.4344 mg
+  Long-term σ  (s)       : 3.7487 mg
+  Process mean           : 1000.1086 mg
+
+    Cp  = 1.4559   (tolerance / 6σ_within)
+    Cpk = 1.4453   min((USL-mean)/3σ, (mean-LSL)/3σ) — short-term
+    Pp  = 1.3338   (tolerance / 6σ_overall)
+    Ppk = 1.3241   min((USL-mean)/3σ, (mean-LSL)/3σ) — long-term
+    Sigma level = 4.34σ
+
+    Interpretation:
+      Cp  ≥ 1.33  → Good potential capability         : ✓ PASS
+      Cpk ≥ 1.33  → Process centered and capable      : ✓ PASS
+      Ppk ≥ 1.33  → Long-term performance adequate     : ✗ FAIL
+
+  ─────────────────────────── CAPABILITY BY LINE ───────────────────────────────
+Line A      Cp=1.498  Cpk=1.495  Pp=1.417  Ppk=1.414  Mean=999.97 mg  σ_within=3.337
+Line B      Cp=1.399  Cpk=1.348  Pp=1.207  Ppk=1.163  Mean=1000.55 mg  σ_within=3.573
+Line C      Cp=1.474  Cpk=1.455  Pp=1.427  Ppk=1.408  Mean=999.81 mg  σ_within=3.393
+
+  ─────────────────────────── OUT-OF-CONTROL SIGNALS ─────────────────────────
+  Western Electric rules applied to X-bar chart (all lines combined):
+    Rule 1: 1pt beyond 3σ              : 14 signal(s)
+    Rule 2: 2/3 beyond 2σ              : 4 signal(s)
+    Rule 3: 4/5 beyond 1σ              : 2 signal(s)
+    Rule 4: 8 pts one side             : 15 signal(s)
+    Rule 5: 6 pt trend                 : 0 signal(s)
+
+    Total out-of-control signals detected : 35
+
+─────────────────────────── CORRECTIVE ACTIONS ───────────────────────────────
+Quality Event (Line B, Days 18-23):
+  Root cause   : Progressive mean shift (+8 mg) with increased variability
+  Likely cause : Tobacco blend variation / hopper feed rate inconsistency
+  Action taken : Hopper recalibration, blend adjustment (Day 23)
+  Result       : Process returned to control by Day 24
+
+─────────────────────────── RECOMMENDED ACTIONS ──────────────────────────────
+1. Continue X-bar & R monitoring on 5-sample subgroups each shift
+2. Investigate Hopper Feed Rate (30% of defects — top Pareto cause)
+3. Implement SPC alert automation to trigger immediate corrective action
+4. Target Cpk ≥ 1.67 (Six Sigma level) through process centering
+5. Review D3/D4 constants if subgroup size changes
+
+─────────────────────────── CHART INVENTORY ──────────────────────────────────
+reports/charts/xbar_r_overall.png        — X-bar & R (all lines)
+reports/charts/xbar_r_line_a.png         — X-bar & R (Line A)
+reports/charts/xbar_r_line_b.png         — X-bar & R (Line B) — quality event visible
+reports/charts/xbar_r_line_c.png         — X-bar & R (Line C)
+reports/charts/histogram_spec_limits.png  — Histogram with USL/LSL
+reports/charts/capability_gauge.png       — Cp/Cpk/Pp/Ppk bar chart
+reports/charts/pareto_defect_causes.png   — Pareto of defect causes
+reports/charts/run_chart.png              — Individual run chart (all observations)
+
+═══════════════════════════════════════════════════════════════════════════════
+END OF REPORT
+═══════════════════════════════════════════════════════════════════════════════
