@@ -1,7 +1,8 @@
 # Process Control & SPC Toolkit
 
+[![CI](https://github.com/Gavand1969/process-control-spc/actions/workflows/ci.yml/badge.svg)](https://github.com/Gavand1969/process-control-spc/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
-[![Tests](https://img.shields.io/badge/Tests-50%20passed-437A22?style=flat-square&logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-63%20passed-437A22?style=flat-square&logo=pytest&logoColor=white)](tests/)
 [![Six Sigma](https://img.shields.io/badge/Six%20Sigma-Green%20Belt%20Tools-20808D?style=flat-square)](https://asq.org/cert/six-sigma-green-belt)
 [![AIAG SPC](https://img.shields.io/badge/Standard-AIAG%20SPC%20Manual-1B474D?style=flat-square)](https://www.aiag.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-D4D1CA?style=flat-square)](LICENSE)
@@ -99,7 +100,7 @@ The WECO rules detect non-random patterns in control charts beyond simple 3σ ex
 | 7    | 14 consecutive points alternating up-down     | Over-control / tampering           |
 | 8    | 8 consecutive points beyond ±1σ, both sides  | Mixture — two process distributions|
 
-Rules 1–5 are applied by default in the report. All eight are unit tested.
+Rules 1–5 are applied by default in the report (pass `rules=(1, 2, 3, 4, 5, 6, 7, 8)` to `detect_violations` to apply all eight). All eight are unit tested.
 
 **35 out-of-control signals** were detected across all lines — concentrated on Line B during the quality event window (subgroups 97–188, corresponding to days 18–23 shifts).
 
@@ -117,8 +118,10 @@ process-control-spc/
 │   ├── rules.py                   # Western Electric rules 1–8
 │   └── report.py                  # End-to-end runner → charts + report
 ├── tests/
-│   ├── test_capability.py         # 17 unit tests for Cp/Cpk math
-│   └── test_rules.py              # 33 unit tests for WECO rules + constants
+│   ├── test_capability.py         # Unit tests for Cp/Cpk/Pp/Ppk math
+│   └── test_rules.py              # Unit tests for WECO rules 1-8 + constants
+├── docs/
+│   └── INTERPRETATION_GUIDE.md    # How to read the indices, charts, and WECO rules
 ├── data/
 │   └── factory_measurements.csv  # Generated CSV (600 obs × 3 lines)
 ├── reports/
@@ -140,6 +143,12 @@ process-control-spc/
 
 ---
 
+## Interpretation Guide
+
+For a recruiter-/engineer-friendly walkthrough of what each capability index means, how to read the WECO rules, and the typical action workflow, see **[docs/INTERPRETATION_GUIDE.md](docs/INTERPRETATION_GUIDE.md)**.
+
+---
+
 ## How to Run
 
 ### 1. Clone and install
@@ -148,6 +157,12 @@ process-control-spc/
 git clone https://github.com/Gavand1969/process-control-spc.git
 cd process-control-spc
 pip install -r requirements.txt
+```
+
+For an editable install with dev extras:
+
+```bash
+pip install -e ".[dev]"
 ```
 
 ### 2. Generate data
@@ -177,10 +192,11 @@ python src/report.py --regen
 python -m pytest tests/ -v
 ```
 
-All 50 tests pass. Tests verify:
+All 63 tests pass. Tests verify:
 - SPC constants A2=0.577, D3=0, D4=2.114, d2=2.326 for n=5
-- Cpk formula correctness against hand-calculated values
-- Each Western Electric rule triggers and does not trigger on synthetic edge cases
+- Cp, Cpk, Pp, Ppk formula correctness against hand-calculated values
+- Short-term vs long-term σ behavior with and without special-cause shifts
+- Each of the 8 Western Electric rules triggers and does not trigger on synthetic edge cases
 
 ---
 
@@ -224,7 +240,7 @@ print(f"Cpk = {cap.cpk:.4f}")
 | **Root cause analysis** | Pareto chart of defect causes with 80% line |
 | **Quality event storytelling** | Line B drift Days 18–22, corrective action Day 23 |
 | **Control plan thinking** | Auto-generated control plan summary with recommendations |
-| **Software engineering** | Pure Python, typed functions, docstrings, 50 unit tests, zero-error CI |
+| **Software engineering** | Pure Python, typed functions, docstrings, 63 unit tests, GitHub Actions CI on Py 3.10/3.11/3.12 |
 | **Standards alignment** | AIAG SPC Manual 2nd ed., Montgomery SQC 8th ed., ASQ CSSGB BoK |
 
 ---

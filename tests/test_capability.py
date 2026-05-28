@@ -181,3 +181,43 @@ class TestCapabilityByLine:
         df = pd.DataFrame(rows)
         result = capability_by_line(df, usl=1015, lsl=985, subgroup_size=5)
         assert (result[["cp", "cpk", "pp", "ppk"]] > 0).all().all()
+
+
+# ─── Documented behavior: short-term vs long-term σ relationship ─────────────
+
+class TestShortTermVsLongTerm:
+    def test_pp_lower_than_cp_when_special_cause_present(self):
+        """
+        When a special-cause shift inflates between-subgroup variation,
+        σ_overall > σ_within and Pp < Cp. This is the textbook signature
+        of a process that is capable within subgroups but unstable over time.
+        """
+        rng = np.random.default_rng(2026)
+        # 60 subgroups of 5 with a step shift halfway through
+        first_half = rng.normal(1000.0, 2.0, 150)
+        second_half = rng.normal(1006.0, 2.0, 150)  # +6 mg shift
+        data = np.concatenate([first_half, second_half])
+        result = compute_capability(data, usl=1015, lsl=985, subgroup_size=5)
+        assert result.sigma_overall > result.sigma_within
+        assert result.pp < result.cp
+
+    def test_cp_equals_pp_when_no_special_cause(self):
+        """
+        Without a special-cause, σ_within ≈ σ_overall, so Cp ≈ Pp.
+        This is the textbook signature of a stable process.
+        """
+        rng = np.random.default_rng(2027)
+        data = rng.normal(1000.0, 3.5, 600)
+        result = compute_capability(data, usl=1015, lsl=985, subgroup_size=5)
+        assert abs(result.cp - result.pp) < 0.15
+
+    def test_observations_trimmed_to_complete_subgroups(self):
+        """
+        When n is not divisible by subgroup_size, extra observations are trimmed.
+        Results should still be computed (not raise) and be reasonable.
+        """
+        rng = np.random.default_rng(2028)
+        data = rng.normal(1000.0, 3.5, 603)  # 600 + 3 extras
+        result = compute_capability(data, usl=1015, lsl=985, subgroup_size=5)
+        assert result.cp > 0
+        assert result.cpk > 0

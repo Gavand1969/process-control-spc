@@ -79,7 +79,11 @@ def compute_capability(
     Parameters
     ----------
     data : array-like
-        Individual measurements (all observations pooled).
+        Individual measurements pooled in production order. Successive
+        ``subgroup_size`` observations are treated as one rational subgroup
+        for the σ_within (R̄/d₂) calculation, so the input order must match
+        how subgroups were actually produced. Trailing observations that do
+        not fill a complete subgroup are silently dropped.
     usl : float
         Upper Specification Limit.
     lsl : float
