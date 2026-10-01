@@ -196,6 +196,84 @@ class TestRule5:
         assert rule5(_flat(), CENTER, SIGMA) == []
 
 
+# ─── Rule 6: 15 consecutive points within ±1σ (stratification) ───────────────
+
+class TestRule6:
+    def test_triggers_on_15_hugging_centerline(self):
+        """15 consecutive points within ±1σ trigger Rule 6."""
+        x = _flat(30)
+        for i in range(15):
+            x[i] = CENTER + 0.1 * SIGMA  # well within 1σ
+        result = rule6(x, CENTER, SIGMA)
+        assert 14 in result
+
+    def test_no_trigger_one_point_outside_band(self):
+        """A single point outside ±1σ breaks the run — no trigger."""
+        x = _flat(30)
+        for i in range(15):
+            x[i] = CENTER + 0.1 * SIGMA
+        x[10] = CENTER + 1.5 * SIGMA  # break the run
+        result = rule6(x, CENTER, SIGMA)
+        assert 14 not in result
+
+    def test_no_violation_when_points_vary(self):
+        """Normal noisy data should not trigger Rule 6."""
+        rng = np.random.default_rng(123)
+        x = rng.normal(CENTER, SIGMA, 50)
+        # Some points must fall outside 1σ in random normal data
+        assert rule6(x, CENTER, SIGMA) == []
+
+
+# ─── Rule 7: 14 consecutive alternating up-down ──────────────────────────────
+
+class TestRule7:
+    def test_triggers_on_perfect_alternation(self):
+        """14 strictly alternating points trigger Rule 7."""
+        x = _flat(30)
+        # Build a strict zig-zag of length 14
+        base = CENTER
+        for i in range(14):
+            x[i] = base + (0.3 if i % 2 == 0 else -0.3)
+        result = rule7(x, CENTER, SIGMA)
+        assert 13 in result
+
+    def test_no_trigger_on_monotone(self):
+        """Strictly increasing values are NOT alternating."""
+        x = _flat(30)
+        for i in range(14):
+            x[i] = CENTER + i * 0.1
+        result = rule7(x, CENTER, SIGMA)
+        assert 13 not in result
+
+    def test_no_violation_in_control(self):
+        assert rule7(_flat(), CENTER, SIGMA) == []
+
+
+# ─── Rule 8: 8 consecutive points beyond ±1σ (mixture) ───────────────────────
+
+class TestRule8:
+    def test_triggers_on_mixture(self):
+        """8 consecutive points all beyond ±1σ (either side) trigger Rule 8."""
+        x = _flat(30)
+        # Alternate sides — all beyond 1σ in absolute value
+        for i in range(8):
+            x[i] = CENTER + (1.5 * SIGMA if i % 2 == 0 else -1.5 * SIGMA)
+        result = rule8(x, CENTER, SIGMA)
+        assert 7 in result
+
+    def test_no_trigger_with_one_in_zone_c(self):
+        """A single point within ±1σ breaks the mixture pattern."""
+        x = _flat(30)
+        for i in range(8):
+            x[i] = CENTER + (1.5 * SIGMA if i % 2 == 0 else -1.5 * SIGMA)
+        x[4] = CENTER + 0.2 * SIGMA  # within 1σ — breaks rule
+        result = rule8(x, CENTER, SIGMA)
+        assert 7 not in result
+
+    def test_no_violation_in_control(self):
+        assert rule8(_flat(), CENTER, SIGMA) == []
+
+
 # ─── detect_violations integration ────────────────────────────────────────────
 
 class TestDetectViolations:
@@ -226,6 +304,15 @@ class TestDetectViolations:
         x[0] = 1015.0  # beyond UCL=1010.5 → Rule 1
         result = detect_violations(x, CENTER, UCL, LCL, rules=(1,))
         assert 0 in result[1]
+
+    def test_all_eight_rules_dispatchable(self):
+        """All 8 WECO rules must be selectable via detect_violations."""
+        x = _flat(30)
+        result = detect_violations(x, CENTER, UCL, LCL, rules=(1, 2, 3, 4, 5, 6, 7, 8))
+        assert set(result.keys()) == {1, 2, 3, 4, 5, 6, 7, 8}
+        # On flat data, only rule 6 (15 in ±1σ) should fire — all 30 points are exactly at center
+        for r in (1, 2, 3, 5, 7, 8):
+            assert result[r] == [], f"Rule {r} should not trigger on flat data"
 
 
 # ─── violations_to_dataframe ──────────────────────────────────────────────────
