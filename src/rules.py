@@ -3,9 +3,8 @@ rules.py
 ========
 Western Electric / Nelson Rules for Out-of-Control Detection
 
-Implements the eight Western Electric rules as defined in:
-  Western Electric Company (1956). Statistical Quality Control Handbook.
-  Also known as the WECO rules and aligned with AIAG SPC Manual (2nd ed.).
+Implements the four classic Western Electric rules and four additional run-pattern
+checks. The rule numbers used by this toolkit are listed below.
 
 Rule definitions (applied to X-bar chart subgroup means):
   Rule 1: 1 point beyond ±3σ (Zone A)
@@ -124,21 +123,20 @@ def rule7(values: np.ndarray, center: float, sigma: float) -> List[int]:
     for i in range(13, n):
         window = values[i - 13 : i + 1]
         diffs = np.diff(window)
-        alternating = all(
-            (diffs[j] > 0) != (diffs[j + 1] > 0) for j in range(len(diffs) - 1)
-        )
+        directions = np.sign(diffs)
+        alternating = np.all(directions[1:] * directions[:-1] < 0)
         if alternating:
             violations.append(i)
     return violations
 
 
 def rule8(values: np.ndarray, center: float, sigma: float) -> List[int]:
-    """8 consecutive points beyond ±1σ on either side (mixture pattern)."""
+    """8 consecutive points outside ±1σ with points on both sides."""
     violations = []
     n = len(values)
     for i in range(7, n):
         window = values[i - 7 : i + 1]
-        if all(abs(v - center) > sigma for v in window):
+        if all(abs(v - center) > sigma for v in window) and min(window) < center < max(window):
             violations.append(i)
     return violations
 

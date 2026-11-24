@@ -3,7 +3,7 @@
   ║           CONTROL PLAN REPORT — TOBACCO ROD WEIGHT (Statistical SPC)        ║
   ╚══════════════════════════════════════════════════════════════════════════════╝
 
-  Generated : 2026-05-27 20:25
+  Generated : 2026-11-24 09:22
   Author    : Gavin Anderson (M.S. Data Science)
   Reference : AIAG SPC Manual, 2nd Ed. | Montgomery SQC, 8th Ed.
 
@@ -38,8 +38,8 @@
 
     Interpretation:
       Cp  ≥ 1.33  → Good potential capability         : ✓ PASS
-      Cpk ≥ 1.33  → Process centered and capable      : ✓ PASS
-      Ppk ≥ 1.33  → Long-term performance adequate     : ✗ FAIL
+      Cpk ≥ 1.33  → Short-term index threshold       : ✓ PASS
+      Ppk ≥ 1.33  → Long-term index threshold        : ✗ FAIL
 
   ─────────────────────────── CAPABILITY BY LINE ───────────────────────────────
 Line A      Cp=1.498  Cpk=1.495  Pp=1.417  Ppk=1.414  Mean=999.97 mg  σ_within=3.337
@@ -47,7 +47,7 @@ Line B      Cp=1.399  Cpk=1.348  Pp=1.207  Ppk=1.163  Mean=1000.55 mg  σ_within
 Line C      Cp=1.474  Cpk=1.455  Pp=1.427  Ppk=1.408  Mean=999.81 mg  σ_within=3.393
 
   ─────────────────────────── OUT-OF-CONTROL SIGNALS ─────────────────────────
-  Western Electric rules applied to X-bar chart (all lines combined):
+  Rules applied to X-bar chart (all lines combined, in production order):
     Rule 1: 1pt beyond 3σ              : 14 signal(s)
     Rule 2: 2/3 beyond 2σ              : 4 signal(s)
     Rule 3: 4/5 beyond 1σ              : 2 signal(s)
@@ -57,17 +57,17 @@ Line C      Cp=1.474  Cpk=1.455  Pp=1.427  Ppk=1.408  Mean=999.81 mg  σ_within=
     Total out-of-control signals detected : 35
 
 ─────────────────────────── CORRECTIVE ACTIONS ───────────────────────────────
-Quality Event (Line B, Days 18-23):
-  Root cause   : Progressive mean shift (+8 mg) with increased variability
-  Likely cause : Tobacco blend variation / hopper feed rate inconsistency
-  Action taken : Hopper recalibration, blend adjustment (Day 23)
-  Result       : Process returned to control by Day 24
+Simulated event (Line B, Days 18-23):
+  Days 18–22   : The generator increases the mean by up to 8 mg and increases spread.
+  Day 23       : The generator models partial recovery.
+  Day 24 onward: The generator restores the original process parameters.
+  Full-period capability indices include this unstable interval.
 
 ─────────────────────────── RECOMMENDED ACTIONS ──────────────────────────────
 1. Continue X-bar & R monitoring on 5-sample subgroups each shift
-2. Investigate Hopper Feed Rate (30% of defects — top Pareto cause)
+2. Review the most frequent assigned defect causes: Hopper feed rate (2 of 2 each).
 3. Implement SPC alert automation to trigger immediate corrective action
-4. Target Cpk ≥ 1.67 (Six Sigma level) through process centering
+4. Evaluate capability for a stable period on each line before drawing conclusions.
 5. Review D3/D4 constants if subgroup size changes
 
 ─────────────────────────── CHART INVENTORY ──────────────────────────────────

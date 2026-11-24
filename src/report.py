@@ -240,6 +240,13 @@ def write_text_report(
     oos_rate = df["out_of_spec"].mean()
     n_oos = df["out_of_spec"].sum()
     n_total = len(df)
+    defect_counts = df.loc[df["out_of_spec"], "defect_cause"].value_counts()
+    if defect_counts.empty:
+        pareto_note = "No classified out-of-spec observations are available for Pareto review."
+    else:
+        count = int(defect_counts.max())
+        leaders = ", ".join(defect_counts[defect_counts == count].index)
+        pareto_note = f"Review the most frequent assigned defect causes: {leaders} ({count} of {n_oos} each)."
 
     lines_text = []
     for line_name, row in cap_by_line.iterrows():
@@ -289,14 +296,14 @@ def write_text_report(
 
       Interpretation:
         Cp  ≥ 1.33  → Good potential capability         : {'✓ PASS' if cap_overall.cp >= 1.33 else '✗ FAIL'}
-        Cpk ≥ 1.33  → Process centered and capable      : {'✓ PASS' if cap_overall.cpk >= 1.33 else '✗ FAIL'}
-        Ppk ≥ 1.33  → Long-term performance adequate     : {'✓ PASS' if cap_overall.ppk >= 1.33 else '✗ FAIL'}
+        Cpk ≥ 1.33  → Short-term index threshold       : {'✓ PASS' if cap_overall.cpk >= 1.33 else '✗ FAIL'}
+        Ppk ≥ 1.33  → Long-term index threshold        : {'✓ PASS' if cap_overall.ppk >= 1.33 else '✗ FAIL'}
 
     ─────────────────────────── CAPABILITY BY LINE ───────────────────────────────
 {chr(10).join(lines_text)}
 
     ─────────────────────────── OUT-OF-CONTROL SIGNALS ─────────────────────────
-    Western Electric rules applied to X-bar chart (all lines combined):
+    Rules applied to X-bar chart (all lines combined, in production order):
 """)
 
     total_violations = 0
@@ -307,19 +314,19 @@ def write_text_report(
 
     report_text += f"\n    Total out-of-control signals detected : {total_violations}\n"
 
-    report_text += textwrap.dedent("""
+    report_text += textwrap.dedent(f"""
     ─────────────────────────── CORRECTIVE ACTIONS ───────────────────────────────
-    Quality Event (Line B, Days 18-23):
-      Root cause   : Progressive mean shift (+8 mg) with increased variability
-      Likely cause : Tobacco blend variation / hopper feed rate inconsistency
-      Action taken : Hopper recalibration, blend adjustment (Day 23)
-      Result       : Process returned to control by Day 24
+    Simulated event (Line B, Days 18-23):
+      Days 18–22   : The generator increases the mean by up to 8 mg and increases spread.
+      Day 23       : The generator models partial recovery.
+      Day 24 onward: The generator restores the original process parameters.
+      Full-period capability indices include this unstable interval.
 
     ─────────────────────────── RECOMMENDED ACTIONS ──────────────────────────────
     1. Continue X-bar & R monitoring on 5-sample subgroups each shift
-    2. Investigate Hopper Feed Rate (30% of defects — top Pareto cause)
+    2. {pareto_note}
     3. Implement SPC alert automation to trigger immediate corrective action
-    4. Target Cpk ≥ 1.67 (Six Sigma level) through process centering
+    4. Evaluate capability for a stable period on each line before drawing conclusions.
     5. Review D3/D4 constants if subgroup size changes
 
     ─────────────────────────── CHART INVENTORY ──────────────────────────────────
@@ -358,6 +365,7 @@ def main(regen: bool = False):
         print("[report] Generating factory data...")
         df = generate_data(save=True)
 
+    df = df.sort_values(["day", "shift", "machine_line", "sample_id"])
     print(f"[report] {len(df)} observations loaded. Lines: {df['machine_line'].unique().tolist()}")
 
     # 2. Process capability — all lines
@@ -380,7 +388,7 @@ def main(regen: bool = False):
         overall_chart.xbar, overall_chart.xbar_cl,
         overall_chart.xbar_ucl, overall_chart.xbar_lcl,
     )
-    viol_df = violations_to_dataframe(violations_summary)
+    viol_df = violations_to_dataframe(violations_summary, overall_chart.subgroup_labels)
     if not viol_df.empty:
         print(f"\n[report] {len(viol_df)} out-of-control signals detected:")
         print(viol_df.head(20).to_string())
