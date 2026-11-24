@@ -106,7 +106,7 @@ def build_control_chart(
     value_col : str
         Column of individual measurements.
     group_col : str
-        Column identifying subgroup membership.
+        Column identifying subgroup membership. Supply subgroups in observation order.
     n : int
         Subgroup size.
 
@@ -117,7 +117,10 @@ def build_control_chart(
     consts = get_constants(n)
     A2, D3, D4, d2 = consts["A2"], consts["D3"], consts["D4"], consts["d2"]
 
-    grouped = df.groupby(group_col, sort=True)[value_col]
+    # Rule windows must follow production order, even when labels are strings.
+    grouped = df.groupby(group_col, sort=False)[value_col]
+    if not grouped.count().eq(n).all():
+        raise ValueError(f"Each subgroup must contain {n} measurements for these control limits.")
     xbar = grouped.mean().values
     ranges = (grouped.max() - grouped.min()).values
     labels = grouped.mean().index.tolist()

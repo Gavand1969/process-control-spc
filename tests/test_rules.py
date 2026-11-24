@@ -289,3 +289,28 @@ class TestSPCChartsConstants:
         from src.spc_charts import get_constants
         with pytest.raises(ValueError):
             get_constants(11)
+
+
+def test_rule6_checks_all_fifteen_points():
+    values = np.full(15, CENTER)
+    assert rule6(values, CENTER, SIGMA) == [14]
+    values[4] = CENTER + SIGMA
+    assert not rule6(values, CENTER, SIGMA)
+
+
+def test_rule7_rejects_ties_in_an_alternating_sequence():
+    values = np.tile([CENTER, CENTER + SIGMA], 7)
+    assert rule7(values, CENTER, SIGMA) == [13]
+    differences = np.diff(values)
+    differences[1] = 0
+    tied_values = np.r_[CENTER, CENTER + np.cumsum(differences)]
+    assert not rule7(tied_values, CENTER, SIGMA)
+
+
+def test_rule8_requires_points_on_both_sides():
+    values = np.full(8, CENTER + 2 * SIGMA)
+    assert not rule8(values, CENTER, SIGMA)
+    values[3] = CENTER - 2 * SIGMA
+    assert rule8(values, CENTER, SIGMA) == [7]
+    values[5] = CENTER
+    assert not rule8(values, CENTER, SIGMA)

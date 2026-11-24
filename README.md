@@ -1,7 +1,7 @@
 # Process Control & SPC Toolkit
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
-[![Tests](https://img.shields.io/badge/Tests-50%20passed-437A22?style=flat-square&logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-55%20passed-437A22?style=flat-square&logo=pytest&logoColor=white)](tests/)
 [![Six Sigma](https://img.shields.io/badge/Six%20Sigma-Green%20Belt%20Tools-20808D?style=flat-square)](https://asq.org/cert/six-sigma-green-belt)
 [![AIAG SPC](https://img.shields.io/badge/Standard-AIAG%20SPC%20Manual-1B474D?style=flat-square)](https://www.aiag.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-D4D1CA?style=flat-square)](LICENSE)
@@ -67,9 +67,9 @@ Ppk = min((USL − mean) / (3 × σ_overall), (mean − LSL) / (3 × σ_overall)
 | Index | Value  | Interpretation                        |
 |-------|--------|---------------------------------------|
 | Cp    | 1.4559 | Good potential capability (> 1.33)    |
-| **Cpk**   | **1.4453** | **Process centered and capable**      |
+| **Cpk**   | **1.4453** | **Full-period short-term index, including the simulated shift**      |
 | Pp    | 1.3338 | Long-term performance acceptable      |
-| Ppk   | 1.3241 | Long-term performance acceptable      |
+| Ppk   | 1.3241 | Below the 1.33 comparison threshold      |
 | σ level | 4.34σ | Above 4σ threshold                  |
 
 ### By Machine Line
@@ -86,7 +86,7 @@ Ppk = min((USL − mean) / (3 × σ_overall), (mean − LSL) / (3 × σ_overall)
 
 ## Western Electric Rules Implemented
 
-The WECO rules detect non-random patterns in control charts beyond simple 3σ exceedances. All eight rules are implemented in [`src/rules.py`](src/rules.py).
+The WECO rules detect non-random patterns in control charts beyond simple 3σ exceedances. The four classic Western Electric rules and four additional run-pattern rules are implemented in [`src/rules.py`](src/rules.py).
 
 | Rule | Trigger                                        | Purpose                            |
 |------|------------------------------------------------|------------------------------------|
@@ -101,7 +101,7 @@ The WECO rules detect non-random patterns in control charts beyond simple 3σ ex
 
 Rules 1–5 are applied by default in the report. All eight are unit tested.
 
-**35 out-of-control signals** were detected across all lines — concentrated on Line B during the quality event window (subgroups 97–188, corresponding to days 18–23 shifts).
+In production order the combined chart records **35 rule hits across 32 distinct subgroups**. On the separate Line B chart, **11 of 20 subgroups** trigger at least one rule during the simulated drift on days 18–22. Multiple rules can flag the same subgroup. The capability figures above summarize the whole simulation, including its unstable period.
 
 ---
 
@@ -117,8 +117,9 @@ process-control-spc/
 │   ├── rules.py                   # Western Electric rules 1–8
 │   └── report.py                  # End-to-end runner → charts + report
 ├── tests/
-│   ├── test_capability.py         # 17 unit tests for Cp/Cpk math
-│   └── test_rules.py              # 33 unit tests for WECO rules + constants
+│   ├── test_capability.py         # Capability calculations
+│   ├── test_rules.py              # Rule and constant tests
+│   └── test_chart_sequence.py     # Time order and subgroup-size checks
 ├── data/
 │   └── factory_measurements.csv  # Generated CSV (600 obs × 3 lines)
 ├── reports/
@@ -177,7 +178,7 @@ python src/report.py --regen
 python -m pytest tests/ -v
 ```
 
-All 50 tests pass. Tests verify:
+All 55 tests pass. Tests verify:
 - SPC constants A2=0.577, D3=0, D4=2.114, d2=2.326 for n=5
 - Cpk formula correctness against hand-calculated values
 - Each Western Electric rule triggers and does not trigger on synthetic edge cases
@@ -203,7 +204,8 @@ from src.capability import compute_capability
 from src.spc_charts import build_control_chart, plot_xbar_r
 
 df = pd.read_csv("your_data.csv")
-df["subgroup_id"] = df["day"].astype(str) + "-" + df["shift"].astype(str)
+df = df.sort_values(["day", "shift", "machine_line", "sample_id"])
+df["subgroup_id"] = df.groupby(["day", "shift", "machine_line"], sort=False).ngroup()
 
 chart = build_control_chart(df, value_col="weight_mg", group_col="subgroup_id", n=5)
 fig = plot_xbar_r(chart, title_prefix="My Process", usl=1015, lsl=985)
@@ -219,12 +221,12 @@ print(f"Cpk = {cap.cpk:.4f}")
 | Competency | Implementation |
 |---|---|
 | **SPC chart construction** | X-bar & R with AIAG-correct A2/D3/D4/d2 constants |
-| **Out-of-control detection** | All 8 Western Electric rules, unit tested |
+| **Out-of-control detection** | Four Western Electric rules and four additional run-pattern checks, unit tested |
 | **Process capability** | Cp, Cpk (short-term), Pp, Ppk (long-term) with proper σ_within vs σ_overall |
 | **Root cause analysis** | Pareto chart of defect causes with 80% line |
 | **Quality event storytelling** | Line B drift Days 18–22, corrective action Day 23 |
 | **Control plan thinking** | Auto-generated control plan summary with recommendations |
-| **Software engineering** | Pure Python, typed functions, docstrings, 50 unit tests, zero-error CI |
+| **Software engineering** | Pure Python, typed functions, docstrings, 55 automated tests |
 | **Standards alignment** | AIAG SPC Manual 2nd ed., Montgomery SQC 8th ed., ASQ CSSGB BoK |
 
 ---
